@@ -5,6 +5,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const PuriyCSSPlugin = require('purifycss-webpack')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 const GitRevisionPlugin = require('git-revision-webpack-plugin')
+const BabiliPlugin = require('babili-webpack-plugin')
 
 exports.devServer = ({ host, port } = {}) => ({
   devServer: {
@@ -45,7 +46,8 @@ exports.loadCSS = ({ include, exclude } = { exclude: /node_modules/ }) => ({
           {
             loader: 'css-loader',
             options: {
-              modules: true
+              modules: true,
+              localIdentName: '[name]_[local]',
             }
           },
           exports.autoprefix(),
@@ -65,7 +67,8 @@ exports.loadCSS = ({ include, exclude } = { exclude: /node_modules/ }) => ({
           {
             loader: 'css-loader',
             options: {
-              modules: true
+              modules: true,
+              localIdentName: '[name]_[local]',
             }
           },
           exports.autoprefix(),
@@ -78,7 +81,7 @@ exports.loadCSS = ({ include, exclude } = { exclude: /node_modules/ }) => ({
 
 exports.extractCSS = ({ include, exclude } = { exclude: /node_modules/ }) => {
   const plugin = new ExtractTextPlugin({
-    filename: '[chunkhash].css'
+    filename: '[contenthash:8].css'
   })
 
   return {
@@ -93,7 +96,8 @@ exports.extractCSS = ({ include, exclude } = { exclude: /node_modules/ }) => {
               {
                 loader: 'css-loader',
                 options: {
-                  modules: true
+                  modules: true,
+                  localIdentName: '[name]_[local]',
                 }
               },
               exports.autoprefix()
@@ -118,7 +122,8 @@ exports.extractCSS = ({ include, exclude } = { exclude: /node_modules/ }) => {
               {
                 loader: 'css-loader',
                 options: {
-                  modules: true
+                  modules: true,
+                  localIdentName: '[name]_[local]',
                 }
               },
               exports.autoprefix(),
@@ -144,8 +149,14 @@ exports.autoprefix = () => ({
 
 exports.purifyCSS = ({ paths }) => ({
   plugins: [
-    new PuriyCSSPlugin({ paths })
-  ]
+    new PuriyCSSPlugin({
+      paths,
+      styleExtensions: ['.css', 'styl'],
+      purifyOptions: {
+        minify: true,
+      },
+    }),
+  ],
 })
 
 exports.loadImages = ({ include, exclude, options } = {}) => ({
@@ -171,30 +182,32 @@ exports.loadImages = ({ include, exclude, options } = {}) => ({
               mozjpeg: {
                 quality: 65
               },
-              svgo: {
-                plugins: [
-                  {
-                    removeViewBox: false
-                  },
-                  {
-                    removeEmptyAttrs: false
-                  }
-                ]
-              }
-            }
-          }
-        ]
+            },
+          },
+        ],
       },
       {
         test: /\.svg$/,
         include,
         exclude,
-        use: {
-          loader: 'file-loader',
-          options,
-        }
-      }
-    ]
+        use: [
+          {
+            loader: 'file-loader',
+            options,
+          },
+          {
+            loader: 'svgo-loader',
+            options: {
+              plugins: [
+                { removeTitle: true },
+                { convertColors: { shorthex: false } },
+                { convertPathData: false },
+              ],
+            },
+          },
+        ],
+      },
+    ],
   },
 })
 
@@ -205,7 +218,7 @@ exports.loadFonts = () => ({
         test: /\.(ttf|eot|woff2?)(\?v=\d+\.\d+)?$/,
         loader: 'file-loader',
         options: {
-          name: 'fonts/[hash].[ext]'
+          name: 'fonts/[hash:8].[ext]'
         }
       }
     ]
@@ -253,3 +266,20 @@ exports.attachRevision = () => ({
     }),
   ],
 })
+
+exports.minifyJS = () => ({
+  plugins: [
+    new BabiliPlugin(),
+  ],
+})
+
+exports.setFreeVariable = (key, value) => {
+  const env = {}
+  env[key] = JSON.stringify(value)
+
+  return {
+    plugins: [
+      new webpack.DefinePlugin(env),
+    ],
+  }
+}

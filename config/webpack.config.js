@@ -1,3 +1,4 @@
+const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const merge = require('webpack-merge')
@@ -18,11 +19,20 @@ const commonConfig = merge([
     },
     output: {
       path: PATHS.build,
-      filename: '[chunkhash].js',
+      filename: '[chunkhash:8].js',
+      chunkFilename: "[chunkhash:8].js",
     },
     plugins: [
       new HtmlWebpackPlugin({
-        title: 'Webpack Demo',
+        title: 'Webpack Learning',
+        minify: {
+          html5: true,
+          collapseWhitespace: true,
+          minifyCSS: true,
+          minifyJS: true,
+          minifyURLs: true,
+          removeComments: true,
+        },
       }),
     ],
   },
@@ -35,13 +45,29 @@ const commonConfig = merge([
         resource.match(/\.js$/)
       ),
     },
+    {
+      name: 'manifest',
+      minChunks: Infinity,
+    },
   ]),
   parts.standardLint(),
   parts.loadFonts(),
 ])
 
 const prodConfig = merge([
+  {
+    performance: {
+      hints: 'warning',
+      maxEntrypointSize: 100000,
+      maxAssetSize: 450000,
+    },
+    plugins: [
+      new webpack.HashedModuleIdsPlugin(),
+    ],
+    recordsPath: path.join(__dirname, 'records.json'),
+  },
   parts.clean(PATHS.build),
+  parts.minifyJS(),
   parts.attachRevision(),
   parts.extractCSS(),
   parts.purifyCSS({
@@ -49,10 +75,14 @@ const prodConfig = merge([
   }),
   parts.loadImages({
     options: {
-      name: './images/[hash].[ext]'
+      name: './images/[hash:8].[ext]'
     }
   }),
   parts.loadJavascript({ include: PATHS.src }),
+  parts.setFreeVariable(
+    'process.env.NODE_ENV',
+    'production'
+  ),
 ])
 
 const devConfig = merge([
@@ -61,7 +91,11 @@ const devConfig = merge([
     port: process.env.PORT,
   }),
   parts.loadCSS(),
-  parts.loadImages(),
+  parts.loadImages({
+    options: {
+      name: './images/[hash:8].[ext]'
+    }
+  }),
   parts.generateSourceMaps({ type: 'inline-source-map' }),
 ])
 

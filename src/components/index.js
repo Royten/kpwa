@@ -5,7 +5,7 @@ export default (text = 'Hi there!') => {
   const element = document.createElement('div')
 
   element.className = 'fa fa-hand-spock-o fa-lg'
-  element.classList.add(style.margin10)
+  element.classList.add(style.marginTen)
   element.innerHTML = text
 
   const image = document.createElement('img')
