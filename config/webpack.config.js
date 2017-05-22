@@ -14,27 +14,12 @@ const PATHS = {
 process.traceDeprecation = true
 const commonConfig = merge([
   {
-    entry: {
-      app: PATHS.src,
-    },
     output: {
       path: PATHS.build,
       filename: '[chunkhash:8].js',
       chunkFilename: "[chunkhash:8].js",
+      //publicPath: '/webpack-demo/',
     },
-    plugins: [
-      new HtmlWebpackPlugin({
-        title: 'Webpack Learning',
-        minify: {
-          html5: true,
-          collapseWhitespace: true,
-          minifyCSS: true,
-          minifyJS: true,
-          minifyURLs: true,
-          removeComments: true,
-        },
-      }),
-    ],
   },
   parts.extractBundles([
     {
@@ -100,9 +85,22 @@ const devConfig = merge([
 ])
 
 module.exports = (env) => {
-  if (env === 'production') {
-    return merge(commonConfig, prodConfig)
-  } else {
-    return merge(commonConfig, devConfig)
-  }
+  const pages = [
+    parts.page({
+      title: 'Webpack Demo',
+      entry: { app: PATHS.src },
+    }),
+    parts.page({
+      title: 'Another demo',
+      path: 'another',
+      entry: {
+        another: path.join(PATHS.src, 'another.js'),
+      },
+    }),
+  ]
+  const config = env === 'production'
+    ? prodConfig
+    : devConfig
+
+  return pages.map(page => merge(commonConfig, config, page))
 }

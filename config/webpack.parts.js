@@ -1,11 +1,12 @@
 const webpack = require('webpack')
 const path = require('path')
 
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
-const PuriyCSSPlugin = require('purifycss-webpack')
-const CleanWebpackPlugin = require('clean-webpack-plugin')
-const GitRevisionPlugin = require('git-revision-webpack-plugin')
-const BabiliPlugin = require('babili-webpack-plugin')
+const ExtractTextPlugin   = require('extract-text-webpack-plugin')
+const PuriyCSSPlugin      = require('purifycss-webpack')
+const CleanWebpackPlugin  = require('clean-webpack-plugin')
+const GitRevisionPlugin   = require('git-revision-webpack-plugin')
+const BabiliPlugin        = require('babili-webpack-plugin')
+const HtmlWebpackPlugin   = require('html-webpack-plugin')
 
 exports.devServer = ({ host, port } = {}) => ({
   devServer: {
@@ -283,3 +284,21 @@ exports.setFreeVariable = (key, value) => {
     ],
   }
 }
+
+exports.page = ({
+  path = '',
+  template = require.resolve(
+    'html-webpack-plugin/default_index.ejs'
+  ),
+  title,
+  entry,
+} = {}) => ({
+  plugins: [
+    new HtmlWebpackPlugin({
+      filename: `${path && path + '/'}index.html`,
+      template,
+      title,
+    }),
+  ],
+  entry,
+})
